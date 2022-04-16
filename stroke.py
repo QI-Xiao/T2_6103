@@ -6,7 +6,7 @@
 import os
 import pandas as pd
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import seaborn as sn 
 
 #%%
@@ -25,6 +25,8 @@ df.head()
 
 # %%
 df.drop('id', axis = 1, inplace = True)
+df[df['gender'] == 'Other']
+df = df.drop(3116)
 # %%
 
 '''
@@ -92,8 +94,7 @@ print(female_stroke['stroke'].value_counts())
 # Balancing the data set using SMOTE: Synthetic Minority Oversampling Technique. Using this method, as the name suggests, the minority target variable is oversampled using random values. The technique uses the concept of K-NN or K neareast neighbors to intelligently generate synthetic data which resembles the values or shape of the outnumbered data instead of directly copying or reusing pre-existing values. 
 # For more info: https://github.com/scikit-learn-contrib/imbalanced-learn
 
-from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.model_selection import train_test_split
+
 
 # separating the target variable from the main data set. 
 
@@ -138,3 +139,55 @@ print(y_sm.value_counts())
 # The data set is perfectly balanced now!
 
 # %%
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.model_selection import train_test_split
+
+# Creating test/train data sets from the balanced set using sklearn train_test_split: 80% train, 20% test 
+X_train, X_test, y_train, y_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
+
+print(y_train.value_counts()) # 80% as training set   
+print(y_test.value_counts()) # 20% as test set
+
+# %%
+from sklearn.linear_model import LogisticRegression
+
+strokemodel = LogisticRegression(max_iter=1000)
+
+strokemodel.fit(X_train, y_train)
+
+#%%
+strokemodel.score(X_test, y_test)
+# 0.8191489361702128 The model is nearly 82% effective in identifying or predicting the results of a participant getting a stroke or not. 
+# %%
+# creating predicted target values using the model for X_test:
+y_predict = strokemodel.predict(X_test)
+
+# Now we can compare y_predict(predicted) values with actual y_test(real) values using a confusion matrix:
+
+cm_stroke_model = confusion_matrix(y_test, y_predict)
+# array([[751, 189],
+#        [151, 789]], dtype=int64)
+#%%
+
+# Creating a heatmap of the above confusion matrix for better visualization and understanding:
+
+sn.heatmap(cm_stroke_model, annot = True, fmt="d")
+plt.show()
+
+# y axis - truth values
+# x axis - predicted values
+
+# The heatmap of the confusion matrix shows that when the values in the y_test data set are compared with the predicted values from y_predict.
+# 751 participants were predicted to 'not have a stroke' and 751 time it was predicted right by the model. 189 times the participant 'did not have a stroke' but it was predicted they did. 151 participants were predidcted to 'have a stroke' but in reality they did not suffer from one. 789 times the participants were predicted to 'have a stroke' and 789 times they got one. 
+
+print(classification_report(y_test, y_predict))
+
+#              precision    recall  f1-score   support
+#
+#           0       0.83      0.80      0.82       940
+#           1       0.81      0.84      0.82       940
+#
+#    accuracy                           0.82      1880
+#   macro avg       0.82      0.82      0.82      1880
+#weighted avg       0.82      0.82      0.82      1880
+#%%

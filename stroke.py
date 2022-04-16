@@ -60,12 +60,12 @@ df.shape
 value_count_stroke = df['stroke'].value_counts()
 print(value_count_stroke)
 
-# 0    4700
+# 0    4699
 # 1     209
 # Name: stroke, dtype: int64
 
 # From initial analysis, the dataset seems to be highly unbalanced. 
-# There are 4700 cases without a stroke and 209 cases with a stroke among the participant list. 
+# There are 4699 cases without a stroke and 209 cases with a stroke among the participant list. 
 #%%
 # Further subdiving the dataset into male and female sets. 
 
@@ -101,9 +101,23 @@ X = df.drop('stroke', axis = 'columns') # regressor data set
 y = df['stroke'] # target variable data set
 
 print(y.value_counts())
-# 0    4700
+# 0    4699
 # 1     209
 # Name: stroke, dtype: int64
+
+#%%
+# Converting column data type to int64 so ordinal values remain as int and not get float values when SMOTE is being performed as the process will generate synthetic values based on KNN algorithm. 
+# For eg: We have to make sure that column values stay IN [1,0] and not something like 0.55 when synthetic values are being set up. 
+
+X['gender'] = X['gender'].astype(np.int64)
+X['ever_married'] = X['ever_married'].astype(np.int64)
+X['Residence_type'] = X['Residence_type'].astype(np.int64)
+X['work_type'] = X['work_type'].astype(np.int64)
+X['smoking_status'] = X['smoking_status'].astype(np.int64)
+
+X.info()
+
+
 #%%
 # install imbalanced-learn package that has SMOTE. 
 # pip install imbalanced-learn --user
@@ -111,4 +125,16 @@ from imblearn.over_sampling import SMOTE
 
 smote = SMOTE(sampling_strategy = 'minority')
 X_sm, y_sm = smote.fit_resample(X, y)
+# %%
+
+print(y_sm.value_counts())
+
+# 1    4699
+# 0    4699
+# Name: stroke, dtype: int64
+
+# We now have generated equal number of participants who have a stroke and participants who do not have a stroke. 
+
+# The data set is perfectly balanced now!
+
 # %%

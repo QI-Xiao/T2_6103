@@ -182,8 +182,12 @@ plt.show()
 # y axis - truth values
 # x axis - predicted values
 
-# The heatmap of the confusion matrix shows that when the values in the y_test data set are compared with the predicted values from y_predict.
-# 751 participants were predicted to 'not have a stroke' and 751 time it was predicted right by the model. 189 times the participant 'did not have a stroke' but it was predicted they did. 151 participants were predidcted to 'have a stroke' but in reality they did not suffer from one. 789 times the participants were predicted to 'have a stroke' and 789 times they got one.
+# The heatmap of the confusion matrix compares the values in the y_test data set with the predicted values from y_predict.
+
+# 751 participants were predicted to not have a stroke and 751 participants were predicted correctly.
+# 151 participants had a stroke but were predicted incorrectly by the model to not have a stroke. 
+# 189 participants did not have a stroke but were predicted incorrectly by the model to have a stroke. 
+# 789 participants had a stroke and were predicted correctly by the model to have a stroke.
 
 print(classification_report(y_test, y_predict))
 
@@ -199,3 +203,48 @@ print(classification_report(y_test, y_predict))
 # Accuracy and f1-score of the model is 0.82 or 82% which is pretty decent given that the target variable has been modified.
 
 # %%
+# Classification tree model on the same data to compare with the Logit model. 
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+
+# %%
+tree_model = DecisionTreeClassifier(max_depth=3)
+tree_model.fit(X_train, y_train)
+y_pred_tree = tree_model.predict(X_test)
+tree_cm = confusion_matrix(y_test, y_pred_tree)
+print(tree_cm)
+sn.heatmap(tree_cm, annot = True, fmt = 'd')
+plt.show()
+print(classification_report(y_test, y_pred_tree))
+#
+# As max_depth is increased in the tree, the accuracy level of the model gets slightly better each time. 
+# This suggests that increasing the depth tends to overfit the model, which makes sense as increasing the tree depth to a value high enough will essentially lead to each data point in the stroke set being a leaf node by itself. 
+#   0       1
+# 0 [[615 325]
+# 1 [ 63 877]]
+
+# 615 participants were predicted to not have a stroke and 615 participants were predicted correctly.
+# 63 participants had a stroke but were predicted incorrectly by the model to not have a stroke. 
+# 325 participants did not have a stroke but were predicted incorrectly by the model to have a stroke. 
+# 877 participants had a stroke and were predicted correctly by the model to have a stroke. 
+
+#               precision    recall  f1-score   support
+# 
+#            0       0.91      0.65      0.76       940
+#            1       0.73      0.93      0.82       940
+# 
+#     accuracy                           0.79      1880
+#    macro avg       0.82      0.79      0.79      1880
+# weighted avg       0.82      0.79      0.79      1880
+
+# Overall, accuracy is 79%, which is slightly less than the Logit model. 
+#%%
+# Running cross-validation on both the models. 
+logit_cv = cross_val_score(strokemodel, X_train, y_train, cv= 10, scoring='accuracy')
+print(logit_cv)
+
+dtc_cv = cross_val_score(tree_model, X_train, y_train, cv= 10, scoring='accuracy')
+print(dtc_cv)
+#%%

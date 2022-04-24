@@ -248,3 +248,39 @@ print(logit_cv)
 dtc_cv = cross_val_score(tree_model, X_train, y_train, cv= 10, scoring='accuracy')
 print(dtc_cv)
 #%%
+# Generating the ROC and AUC plots for both the models:
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# ROC/AUC for Logit model: 
+false_positive_rate, true_positive_rate, threshold = roc_curve(y_test, y_predict)
+plt.figure(figsize=(10, 8), dpi=100)
+plt.axis('scaled')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("AUC & ROC Curve")
+plt.plot(false_positive_rate, true_positive_rate, 'r')
+plt.fill_between(false_positive_rate, true_positive_rate, facecolor='lightsalmon', alpha=0.6)
+plt.text(0.95, 0.05, 'AUC = %0.4f' % roc_auc_score(y_test, y_predict), ha='right', fontsize=12, weight='bold', color='blue')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
+
+# AUC = 0.8207
+
+# ROC/AUC for Classification Tree model:
+false_positive_rate, true_positive_rate, threshold = roc_curve(y_test, y_pred_tree)
+plt.figure(figsize=(10, 8), dpi=100)
+plt.axis('scaled')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("AUC & ROC Curve")
+plt.plot(false_positive_rate, true_positive_rate, 'b')
+plt.fill_between(false_positive_rate, true_positive_rate, facecolor='steelblue', alpha=0.6)
+plt.text(0.95, 0.05, 'AUC = %0.4f' % roc_auc_score(y_test, y_pred_tree), ha='right', fontsize=12, weight='bold', color='blue')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
+
+# AUC = 0.7926
+# Both models are either over or very close to the 0.80 AUC mark. 
+# %%

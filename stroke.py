@@ -62,6 +62,12 @@ df.shape
 value_count_stroke = df['stroke'].value_counts()
 print(value_count_stroke)
 
+df['stroke'].value_counts().plot.bar()
+plt.title('Class Frequency')
+plt.xlabel('Class')
+plt.ylabel('Frequency')
+plt.show()
+
 # 0    4699
 # 1     209
 # Name: stroke, dtype: int64
@@ -80,12 +86,23 @@ print(male_stroke['stroke'].value_counts())
 # 1     89
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 108 men with stroke and 2007 without stroke. 
+
+male_stroke['stroke'].value_counts().plot.bar()
+plt.title('Male Stroke Frequency')
+plt.xlabel('Class')
+plt.ylabel('Frequency')
+plt.show()
+
 print(female_stroke['stroke'].value_counts())
 # 0    2777
 # 1     120
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 141 women with stroke and 2853 without stroke. 
-
+female_stroke['stroke'].value_counts().plot.bar()
+plt.title('Female Stroke Frequency')
+plt.xlabel('Class')
+plt.ylabel('Frequency')
+plt.show()
 
 # %%
 # Above analysis suggests that the data set is highly unbalanced. 
@@ -106,6 +123,7 @@ print(y.value_counts())
 # 1     209
 # Name: stroke, dtype: int64
 
+
 #%%
 # Converting column data type to int64 so ordinal values remain as int and not get float values when SMOTE is being performed as the process will generate synthetic values based on KNN algorithm. 
 # For eg: We have to make sure that column values stay IN [1,0] and not something like 0.55 when synthetic values are being set up. 
@@ -117,6 +135,7 @@ X['work_type'] = X['work_type'].astype(np.int64)
 X['smoking_status'] = X['smoking_status'].astype(np.int64)
 
 X.info()
+
 
 
 #%%

@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn 
 
+
 #%%
 # Loading the data set
 df = pd.read_csv('stroke dataset.csv')
@@ -135,6 +136,36 @@ X['work_type'] = X['work_type'].astype(np.int64)
 X['smoking_status'] = X['smoking_status'].astype(np.int64)
 
 X.info()
+
+#%%
+# EDA-Statistical Testing
+
+stroke_yes = df[df['stroke']==1]
+stroke_no = df[df['stroke']==0]
+
+#%%
+import scipy
+from scipy import stats
+
+def welch_dof(x,y):
+    dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
+    print(f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
+
+welch_dof(stroke_yes['bmi'], stroke_no['bmi'])
+
+def welch_ttest(x, y): 
+    ## Welch-Satterthwaite Degrees of Freedom ##
+    dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
+   
+    t, p = stats.ttest_ind(x, y, equal_var = False)
+    
+    print("\n",
+          f"Welch's t-test= {t:.4f}", "\n",
+          f"p-value = {p:.4f}", "\n",
+          f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
+
+welch_ttest(stroke_yes['bmi'], stroke_no['bmi'])  
+
 #%%
 # Logit plots for BMI and glucose level variables 
 import seaborn as sns

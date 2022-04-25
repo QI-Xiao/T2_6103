@@ -138,7 +138,7 @@ X['smoking_status'] = X['smoking_status'].astype(np.int64)
 X.info()
 
 #%%
-# EDA-Statistical Testing
+# EDA-Statistical Testing (Welch's T-Test for unequal variance and unbalanced sample sizes)
 
 stroke_yes = df[df['stroke']==1]
 stroke_no = df[df['stroke']==0]
@@ -151,7 +151,7 @@ def welch_dof(x,y):
     dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
     print(f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
 
-welch_dof(stroke_yes['bmi'], stroke_no['bmi'])
+welch_dof(stroke_yes['age'], stroke_no['age'])
 
 def welch_ttest(x, y): 
     ## Welch-Satterthwaite Degrees of Freedom ##
@@ -164,10 +164,10 @@ def welch_ttest(x, y):
           f"p-value = {p:.4f}", "\n",
           f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
 
-welch_ttest(stroke_yes['bmi'], stroke_no['bmi'])  
+welch_ttest(stroke_yes['age'], stroke_no['age'])  
 
 #%%
-# Logit plots for BMI and glucose level variables 
+# EDA - Logit plots for BMI and glucose level variables 
 import seaborn as sns
 
 g = sns.lmplot(x="avg_glucose_level", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
@@ -184,6 +184,7 @@ g.set(xlim=(0, 80), ylim=(-.05, 1.05))
 
 plt.show()
 #%%
+# EDA - Pairs plot
 sns.set(style="ticks")
 
 sns.pairplot(df, hue="stroke")
@@ -191,6 +192,7 @@ plt.show()
 
 print("\nReady to continue.")
 #%%
+# EDA - Box plots to show relationships between stroke and work-type & stroke and marriage status 
 work_ranking = ["0", "1", "2", "3", "4"]
 
 sns.boxplot(x="work_type", y="bmi", color="b", order=work_ranking, data=df)
@@ -211,13 +213,15 @@ plt.show()
 
 print("\nReady to continue.")
 #%%
-pivot = pd.pivot_table(data=df, values='stroke', index='heart_disease', columns='gender', aggfunc='count')
-ax = pivot.plot.bar(stacked=True)
+# EDA - Stacked bar charts to visualize stroke  hypertension and heart disease 
+pivot_heart = pd.pivot_table(data=stroke_yes, values='stroke', index='heart_disease', columns='gender', aggfunc='count')
+ax = pivot_heart.plot.bar(stacked=True)
 ax.set_title('Count of Stroke Victims with Heart Disease')
-
-pivot = pd.pivot_table(data=df, values='stroke', index='hypertension', columns='gender', aggfunc='count')
-ax = pivot.plot.bar(stacked=True)
+print(pivot_heart)
+pivot_hyper = pd.pivot_table(data=stroke_yes, values='stroke', index='hypertension', columns='gender', aggfunc='count')
+ax = pivot_hyper.plot.bar(stacked=True)
 ax.set_title('Count of Stroke Victims with Hypertension')
+print(pivot_hyper)
 #%%
 # install imbalanced-learn package that has SMOTE. 
 # pip install imbalanced-learn --user

@@ -135,12 +135,62 @@ X['work_type'] = X['work_type'].astype(np.int64)
 X['smoking_status'] = X['smoking_status'].astype(np.int64)
 
 X.info()
+#%%
+# Logit plots for BMI and glucose level variables 
+import seaborn as sns
 
+g = sns.lmplot(x="avg_glucose_level", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
+# Binomial regression/logistic
+g.set(xlim=(40, 270), ylim=(-.05, 1.05))
 
+plt.show()
 
+print("\nReady to continue.")
+
+g = sns.lmplot(x="bmi", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
+# Binomial regression/logistic
+g.set(xlim=(0, 80), ylim=(-.05, 1.05))
+
+plt.show()
+#%%
+sns.set(style="ticks")
+
+sns.pairplot(df, hue="stroke")
+plt.show()
+
+print("\nReady to continue.")
+#%%
+work_ranking = ["0", "1", "2", "3", "4"]
+
+sns.boxplot(x="work_type", y="bmi", color="b", order=work_ranking, data=df)
+plt.title('Distribution of BMI by Work Type')
+plt.show()
+
+print("\nReady to continue.")
+
+sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
+plt.title('Distribution of BMI by Marital Status')
+plt.show()
+
+print("\nReady to continue.")
+
+sns.boxplot(x="stroke", y="age", color="b", data=df)
+plt.title('Distribution of Age vs. Stroke')
+plt.show()
+
+print("\nReady to continue.")
+#%%
+pivot = pd.pivot_table(data=df, values='stroke', index='heart_disease', columns='gender', aggfunc='count')
+ax = pivot.plot.bar(stacked=True)
+ax.set_title('Count of Stroke Victims with Heart Disease')
+
+pivot = pd.pivot_table(data=df, values='stroke', index='hypertension', columns='gender', aggfunc='count')
+ax = pivot.plot.bar(stacked=True)
+ax.set_title('Count of Stroke Victims with Hypertension')
 #%%
 # install imbalanced-learn package that has SMOTE. 
 # pip install imbalanced-learn --user
+import imblearn
 from imblearn.over_sampling import SMOTE
 
 smote = SMOTE(sampling_strategy = 'minority')

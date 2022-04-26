@@ -194,14 +194,13 @@ df_train_with_predict['predict'] = model2_unbalanced_fit.predict(X_unbalanced_tr
 #%%
 stroke_lst = [0, 1]
 
-# Iterate through the five airlines
 for status in stroke_lst:
-    # Subset to the airline
+    
     subset = df_train_with_predict[df_train_with_predict['stroke'] == status]
     
     # Draw the density plot
     sn.distplot(subset['predict'], hist = False, kde = True,
-                 kde_kws = {'linewidth': 2},
+                 kde_kws = {'linewidth': 5},
                  label = status)
     
 # Plot formatting
@@ -214,11 +213,11 @@ plt.ylabel('Density')
 
 # probs_y is a 2-D array of probability of being labeled as 0 (first column of array) vs 1 (2nd column in array)
 
-from sklearn import metrics
+from sklearn.metrics import auc
 from sklearn.metrics import precision_recall_curve
 precision, recall, thresholds = precision_recall_curve(df_train_with_predict['stroke'], df_train_with_predict['predict']) 
    #retrieve probability of being 1(in second column of probs_y)
-pr_auc = metrics.auc(recall, precision)
+pr_auc = auc(recall, precision)
 
 plt.title("Precision-Recall vs Threshold Chart")
 plt.plot(thresholds, precision[: -1], "b--", label="Precision")
@@ -229,10 +228,10 @@ plt.legend(loc="lower left")
 plt.ylim([0,1])
 
 #%%
-from sklearn.metrics import ConfusionMatrixDisplay
+#from sklearn.metrics import ConfusionMatrixDisplay
 
-cutoff = 0.5
-ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+#cutoff = 0.5
+#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
 # We can find that cutoff 0.5 is not suitable for this model.
 
 #%%
@@ -266,20 +265,19 @@ plt.ylim([800,1500])
 plt.show()
 
 #%%
-ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
 
 
 #%%
-
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import scale
 X_scale = pd.DataFrame( scale(X_sm), columns=X_sm.columns )
 y_scale = y_sm.copy()
 
 X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
 
-# KNN algorithm
-from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import scale
 
 mrroger = 7
 knn = KNeighborsClassifier(n_neighbors=mrroger)
@@ -294,19 +292,9 @@ print(classification_report(y_scale_test, y_scale_test_pred))
 print(confusion_matrix(y_scale_test, y_scale_test_pred))
 
 
-
 # %%
-#feature selection
-# from sklearn.feature_selection import RFE
-
-# selector = RFE(knn_cv, n_features_to_select=5, step=1)
-# selector = selector.fit(X_scale, y_scale)
-# print(selector.support_)
-# print(selector.ranking_)
-
-
-# %%
-
+# Logistic regression using sklearn:
+#
 # Creating test/train data sets from the balanced set using sklearn train_test_split: 80% train, 20% test
 X_train, X_test, y_train, y_test = train_test_split(
     X_sm, y_sm, test_size=0.2, random_state=15, stratify=y_sm)
@@ -362,7 +350,72 @@ print(classification_report(y_test, y_predict))
 
 # Accuracy and f1-score of the model is 0.82 or 82% which is pretty decent given that the target variable has been modified.
 
+
 # %%
+#feature selection for the stroke model. 
+from sklearn.feature_selection import RFE
+
+selector = RFE(strokemodel, n_features_to_select=6, step=1)
+selector = selector.fit(X_train, y_train)
+print(selector.support_)
+print(selector.ranking_)
+
+# [ True False  True  True  True  True  True False False False]
+# [1 2 1 1 1 1 1 5 4 3]
+#  residence type, work type, married status, heart disease, hypertension, and gender have more variance on the target variable than other variables. 
+
+#%%
+# We will check for multicollinearity between the variables 
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Get variables for which to compute VIF and add intercept term
+X_train_fs = X_train[['hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'gender']]
+
+
+# Compute and view VIF
+vif = pd.DataFrame()
+vif["variables"] = X_train_fs.columns
+vif["VIF"] = [ variance_inflation_factor(X_train_fs.values, i) for i in range(X_train_fs.shape[1]) ] # list comprehension
+
+# View results using print
+print(vif)
+# It seems that the vif is lower than 10, which means the model has no problem of Multicollinearity.
+
+
+# %%
+# Generating a secong Logit model based off on features selected from the above analysis:
+
+# Logit 2
+
+X1_train, X1_test, y1_train, y1_test   = train_test_split(
+    X_train_fs, y_train, test_size=0.2, random_state=15, stratify=y_train)
+
+strokemodel2 = LogisticRegression(max_iter=1000)
+
+strokemodel2.fit(X_train_fs, y_train)
+# 65% Accuracy
+#%%
+strokemodel2.score(X1_test, y1_test)
+# %%
+y_pred_model2 = strokemodel2.predict(X1_test)
+# Now we can compare y_predict(predicted) values with actual y_test(real) values using a confusion matrix:
+
+cm_stroke_model2 = confusion_matrix(y1_test, y_pred_model2)
+# array([[751, 189],
+#        [151, 789]], dtype=int64)
+# %%
+
+# Creating a heatmap of the above confusion matrix for better visualization and understanding:
+
+sn.heatmap(cm_stroke_model, annot=True, fmt="d")
+plt.show()
+   
+
+
+
+
+#%%
 # Classification tree model on the same data to compare with the Logit model. 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -407,6 +460,9 @@ print(logit_cv)
 
 dtc_cv = cross_val_score(tree_model, X_train, y_train, cv= 10, scoring='accuracy')
 print(dtc_cv)
+
+logit_fs = cross_val_score(strokemodel2, X_train_fs, y_train, cv= 10, scoring='accuracy')
+print(logit_fs)
 #%%
 # Generating the ROC and AUC plots for both the models:
 from sklearn.metrics import roc_auc_score, roc_curve

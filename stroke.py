@@ -196,22 +196,30 @@ print("\nReady to continue.")
 work_ranking = ["0", "1", "2", "3", "4"]
 
 sns.boxplot(x="work_type", y="bmi", color="b", order=work_ranking, data=df)
-plt.title('Distribution of BMI by Work Type')
+plt.title('BMI Distribution based on Work Type')
 plt.show()
 
 print("\nReady to continue.")
 
 sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
-plt.title('Distribution of BMI by Marital Status')
+plt.title('BMI Distribution based on Marital Status')
 plt.show()
 
 print("\nReady to continue.")
 
-sns.boxplot(x="stroke", y="age", color="b", data=df)
-plt.title('Distribution of Age vs. Stroke')
+sns.boxplot(x="Residence_type", y="avg_glucose_level", color="b", data=df)
+plt.title('Glucose Level Distribution based on Residence Type')
 plt.show()
 
 print("\nReady to continue.")
+
+sns.boxplot(x="Residence_type", y="bmi", color="b", data=df)
+plt.title('Glucose Level Distribution based on Residence Type')
+plt.show()
+
+print("\nReady to continue.")
+
+
 #%%
 # EDA - Stacked bar charts to visualize stroke  hypertension and heart disease 
 pivot_heart = pd.pivot_table(data=stroke_yes, values='stroke', index='heart_disease', columns='gender', aggfunc='count')

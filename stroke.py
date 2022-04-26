@@ -490,7 +490,7 @@ print(vif)
 # %%
 # Generating a secong Logit model based off on features selected from the above analysis:
 
-# Logit 2
+# Logit 2 - Feature Selected Model
 
 X1_train, X1_test, y1_train, y1_test   = train_test_split(
     X_train_fs, y_train, test_size=0.2, random_state=15, stratify=y_train)
@@ -506,17 +506,26 @@ y_pred_model2 = strokemodel2.predict(X1_test)
 # Now we can compare y_predict(predicted) values with actual y_test(real) values using a confusion matrix:
 
 cm_stroke_model2 = confusion_matrix(y1_test, y_pred_model2)
-# array([[751, 189],
-#        [151, 789]], dtype=int64)
+# array([[437, 315],
+#        [198, 554]], dtype=int64)
+
+
+print(classification_report(y1_test, y_pred_model2))
+
+#               precision    recall  f1-score   support
+
+#            0       0.69      0.58      0.63       752
+#            1       0.64      0.74      0.68       752
+
+#     accuracy                           0.66      1504
+#    macro avg       0.66      0.66      0.66      1504
+# weighted avg       0.66      0.66      0.66      1504
 # %%
 
 # Creating a heatmap of the above confusion matrix for better visualization and understanding:
 
-sn.heatmap(cm_stroke_model, annot=True, fmt="d")
+sn.heatmap(cm_stroke_model2, annot=True, fmt="d")
 plt.show()
-   
-
-
 
 
 #%%
@@ -527,7 +536,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 
 # %%
-tree_model = DecisionTreeClassifier(max_depth=3)
+tree_model = DecisionTreeClassifier(max_depth=3, random_state=1)
 tree_model.fit(X_train, y_train)
 y_pred_tree = tree_model.predict(X_test)
 tree_cm = confusion_matrix(y_test, y_pred_tree)
@@ -558,7 +567,14 @@ print(classification_report(y_test, y_pred_tree))
 
 # Overall, accuracy is 79%, which is slightly less than the Logit model. 
 #%%
-# Running cross-validation on both the models. 
+# Tree structure using graphviz library:
+
+from sklearn.tree import export_graphviz 
+
+dot_data = export_graphviz(tree_model, out_file = 'tree1.dot', 
+                                feature_names =['gender', 'age', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'avg_glucose_level', 'bmi', 'smoking_status'])
+#%%
+# Running cross-validation on all the models. 
 logit_cv = cross_val_score(strokemodel, X_train, y_train, cv= 10, scoring='accuracy')
 print(logit_cv)
 
@@ -567,6 +583,7 @@ print(dtc_cv)
 
 logit_fs = cross_val_score(strokemodel2, X_train_fs, y_train, cv= 10, scoring='accuracy')
 print(logit_fs)
+
 #%%
 # Generating the ROC and AUC plots for both the models:
 from sklearn.metrics import roc_auc_score, roc_curve

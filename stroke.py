@@ -7,7 +7,8 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sn 
+import seaborn as sn
+sn.set(style="ticks")
 
 
 #%%
@@ -252,12 +253,158 @@ print(y_sm.value_counts())
 
 # The data set is perfectly balanced now!
 
-# %%
-from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.model_selection import train_test_split
+#%%
+# Logistic regression using balanced dataset
 
-# Creating test/train data sets from the balanced set using sklearn train_test_split: 80% train, 20% test 
-X_train, X_test, y_train, y_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
+df_unbalanced_train, df_unbalanced_test, y_unbalanced_train, y_unbalanced_test = train_test_split(df, y, test_size= 0.2, random_state= 15, stratify=y)
+
+import statsmodels.api as sm
+from statsmodels.formula.api import glm
+
+model1_unbalanced = glm(formula='stroke ~ C(gender) + age + C(hypertension) + C(heart_disease) + C(ever_married) + C(work_type) + C(Residence_type) + avg_glucose_level + bmi + C(smoking_status)', data=df_unbalanced_train, family=sm.families.Binomial())
+
+model1_unbalanced_fit = model1_unbalanced.fit()
+print( model1_unbalanced_fit.summary() )
+
+# %%
+model2_unbalanced = glm(formula='stroke ~ age + C(hypertension) + C(heart_disease) + avg_glucose_level', data=df_unbalanced_train, family=sm.families.Binomial())
+
+model2_unbalanced_fit = model2_unbalanced.fit()
+print( model2_unbalanced_fit.summary() )
+
+# The p-value are all lower than 0.05, meaning that the variables are significant.
+
+# %%
+# And let us check the VIF value (watch out for multicollinearity issues)
+# Import functions
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Get variables for which to compute VIF and add intercept term
+X_unbalanced_train = df_unbalanced_train[['hypertension', 'heart_disease', 'avg_glucose_level', 'age']]
+X_unbalanced_train['Intercept'] = 1
+
+# Compute and view VIF
+vif = pd.DataFrame()
+vif["variables"] = X_unbalanced_train.columns
+vif["VIF"] = [ variance_inflation_factor(X_unbalanced_train.values, i) for i in range(X_unbalanced_train.shape[1]) ] # list comprehension
+
+# View results using print
+print(vif)
+# It seems that the vif is lower than 10, which means the model have no problem of Multicollinearity
+
+#%%
+# So we can predict the stroke possibility now.
+
+df_train_with_predict = df_unbalanced_train.copy()
+df_train_with_predict['predict'] = model2_unbalanced_fit.predict(X_unbalanced_train)
+
+#%%
+stroke_lst = [0, 1]
+
+for status in stroke_lst:
+    
+    subset = df_train_with_predict[df_train_with_predict['stroke'] == status]
+    
+    # Draw the density plot
+    sn.distplot(subset['predict'], hist = False, kde = True,
+                 kde_kws = {'linewidth': 5},
+                 label = status)
+    
+# Plot formatting
+plt.legend(prop={'size': 16}, title = 'Stroke')
+plt.title('Density Plot with Different Stroke Status')
+plt.xlabel('Prediction')
+plt.ylabel('Density')
+
+# %%
+
+# probs_y is a 2-D array of probability of being labeled as 0 (first column of array) vs 1 (2nd column in array)
+
+from sklearn.metrics import auc
+from sklearn.metrics import precision_recall_curve
+precision, recall, thresholds = precision_recall_curve(df_train_with_predict['stroke'], df_train_with_predict['predict']) 
+   #retrieve probability of being 1(in second column of probs_y)
+pr_auc = auc(recall, precision)
+
+plt.title("Precision-Recall vs Threshold Chart")
+plt.plot(thresholds, precision[: -1], "b--", label="Precision")
+plt.plot(thresholds, recall[: -1], "r--", label="Recall")
+plt.ylabel("Precision, Recall")
+plt.xlabel("Threshold")
+plt.legend(loc="lower left")
+plt.ylim([0,1])
+
+#%%
+#from sklearn.metrics import ConfusionMatrixDisplay
+
+#cutoff = 0.5
+#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+# We can find that cutoff 0.5 is not suitable for this model.
+
+#%%
+# Choosing the Suitable Cutoff Value
+cost_fp = 1
+cost_fn = 6
+# Among the 97,374 hospitalizations (average cost: $20,396 ± $23,256), the number with ischemic, hemorrhagic, or other strokes was 62,637, 16,331, and 48,208, respectively, with these types having average costs, in turn, of $18,963 ± $21,454, $32,035 ± $32,046, and $19,248 ± $21,703. 
+# https://pubmed.ncbi.nlm.nih.gov/23954598/#:~:text=Results%3A%20Among%20the%2097%2C374%20hospitalizations,%2432%2C046%2C%20and%20%2419%2C248%20%C2%B1%20%2421%2C703.
+
+cost_lst = []
+cutoff_lst = []
+for cutoff in np.linspace(0,0.5,26):
+    matrix = confusion_matrix(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+    fp = matrix[0][1]
+    fn = matrix[1][0]
+    cost_lst.append(fp * cost_fp + fn * cost_fn)
+    cutoff_lst.append(cutoff)
+
+plt.title("Cost vs Threshold Chart")
+plt.plot(cutoff_lst, cost_lst, "b--")
+plt.ylabel("Cost")
+plt.xlabel("Threshold")
+plt.show()
+
+plt.title("Cost vs Threshold Chart")
+plt.plot(cutoff_lst, cost_lst, "b--")
+plt.ylabel("Cost")
+plt.xlabel("Threshold")
+# plt.ylim([750,1200])
+plt.ylim([800,1500])
+plt.show()
+
+#%%
+#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+
+
+#%%
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import scale
+X_scale = pd.DataFrame( scale(X_sm), columns=X_sm.columns )
+y_scale = y_sm.copy()
+
+X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
+
+
+mrroger = 7
+knn = KNeighborsClassifier(n_neighbors=mrroger)
+knn.fit(X_scale_train, y_scale_train)
+
+y_scale_test_pred = knn.predict(X_scale_test)
+
+from sklearn.metrics import classification_report
+
+print(classification_report(y_scale_test, y_scale_test_pred))
+
+print(confusion_matrix(y_scale_test, y_scale_test_pred))
+
+
+# %%
+# Logistic regression using sklearn:
+#
+# Creating test/train data sets from the balanced set using sklearn train_test_split: 80% train, 20% test
+X_train, X_test, y_train, y_test = train_test_split(
+    X_sm, y_sm, test_size=0.2, random_state=15, stratify=y_sm)
 
 print(y_train.value_counts()) # 80% as training set   
 print(y_test.value_counts()) # 20% as test set
@@ -303,5 +450,157 @@ print(classification_report(y_test, y_predict))
 #
 #    accuracy                           0.82      1880
 #   macro avg       0.82      0.82      0.82      1880
-#weighted avg       0.82      0.82      0.82      1880
+# weighted avg       0.82      0.82      0.82      1880
+
+# Accuracy and f1-score of the model is 0.82 or 82% which is pretty decent given that the target variable has been modified.
+
+
+# %%
+#feature selection for the stroke model. 
+from sklearn.feature_selection import RFE
+
+selector = RFE(strokemodel, n_features_to_select=6, step=1)
+selector = selector.fit(X_train, y_train)
+print(selector.support_)
+print(selector.ranking_)
+
+# [ True False  True  True  True  True  True False False False]
+# [1 2 1 1 1 1 1 5 4 3]
+#  residence type, work type, married status, heart disease, hypertension, and gender have more variance on the target variable than other variables. 
+
 #%%
+# We will check for multicollinearity between the variables 
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Get variables for which to compute VIF and add intercept term
+X_train_fs = X_train[['hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'gender']]
+
+
+# Compute and view VIF
+vif = pd.DataFrame()
+vif["variables"] = X_train_fs.columns
+vif["VIF"] = [ variance_inflation_factor(X_train_fs.values, i) for i in range(X_train_fs.shape[1]) ] # list comprehension
+
+# View results using print
+print(vif)
+# It seems that the vif is lower than 10, which means the model has no problem of Multicollinearity.
+
+
+# %%
+# Generating a secong Logit model based off on features selected from the above analysis:
+
+# Logit 2
+
+X1_train, X1_test, y1_train, y1_test   = train_test_split(
+    X_train_fs, y_train, test_size=0.2, random_state=15, stratify=y_train)
+
+strokemodel2 = LogisticRegression(max_iter=1000)
+
+strokemodel2.fit(X_train_fs, y_train)
+# 65% Accuracy
+#%%
+strokemodel2.score(X1_test, y1_test)
+# %%
+y_pred_model2 = strokemodel2.predict(X1_test)
+# Now we can compare y_predict(predicted) values with actual y_test(real) values using a confusion matrix:
+
+cm_stroke_model2 = confusion_matrix(y1_test, y_pred_model2)
+# array([[751, 189],
+#        [151, 789]], dtype=int64)
+# %%
+
+# Creating a heatmap of the above confusion matrix for better visualization and understanding:
+
+sn.heatmap(cm_stroke_model, annot=True, fmt="d")
+plt.show()
+   
+
+
+
+
+#%%
+# Classification tree model on the same data to compare with the Logit model. 
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+
+# %%
+tree_model = DecisionTreeClassifier(max_depth=3)
+tree_model.fit(X_train, y_train)
+y_pred_tree = tree_model.predict(X_test)
+tree_cm = confusion_matrix(y_test, y_pred_tree)
+print(tree_cm)
+sn.heatmap(tree_cm, annot = True, fmt = 'd')
+plt.show()
+print(classification_report(y_test, y_pred_tree))
+#
+# As max_depth is increased in the tree, the accuracy level of the model gets slightly better each time. 
+# This suggests that increasing the depth tends to overfit the model, which makes sense as increasing the tree depth to a value high enough will essentially lead to each data point in the stroke set being a leaf node by itself. 
+#   0       1
+# 0 [[615 325]
+# 1 [ 63 877]]
+
+# 615 participants were predicted to not have a stroke and 615 participants were predicted correctly.
+# 63 participants had a stroke but were predicted incorrectly by the model to not have a stroke. 
+# 325 participants did not have a stroke but were predicted incorrectly by the model to have a stroke. 
+# 877 participants had a stroke and were predicted correctly by the model to have a stroke. 
+
+#               precision    recall  f1-score   support
+# 
+#            0       0.91      0.65      0.76       940
+#            1       0.73      0.93      0.82       940
+# 
+#     accuracy                           0.79      1880
+#    macro avg       0.82      0.79      0.79      1880
+# weighted avg       0.82      0.79      0.79      1880
+
+# Overall, accuracy is 79%, which is slightly less than the Logit model. 
+#%%
+# Running cross-validation on both the models. 
+logit_cv = cross_val_score(strokemodel, X_train, y_train, cv= 10, scoring='accuracy')
+print(logit_cv)
+
+dtc_cv = cross_val_score(tree_model, X_train, y_train, cv= 10, scoring='accuracy')
+print(dtc_cv)
+
+logit_fs = cross_val_score(strokemodel2, X_train_fs, y_train, cv= 10, scoring='accuracy')
+print(logit_fs)
+#%%
+# Generating the ROC and AUC plots for both the models:
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# ROC/AUC for Logit model: 
+false_positive_rate, true_positive_rate, threshold = roc_curve(y_test, y_predict)
+plt.figure(figsize=(10, 8), dpi=100)
+plt.axis('scaled')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("AUC & ROC Curve")
+plt.plot(false_positive_rate, true_positive_rate, 'r')
+plt.fill_between(false_positive_rate, true_positive_rate, facecolor='lightsalmon', alpha=0.6)
+plt.text(0.95, 0.05, 'AUC = %0.4f' % roc_auc_score(y_test, y_predict), ha='right', fontsize=12, weight='bold', color='blue')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
+
+# AUC = 0.8207
+
+# ROC/AUC for Classification Tree model:
+false_positive_rate, true_positive_rate, threshold = roc_curve(y_test, y_pred_tree)
+plt.figure(figsize=(10, 8), dpi=100)
+plt.axis('scaled')
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("AUC & ROC Curve")
+plt.plot(false_positive_rate, true_positive_rate, 'b')
+plt.fill_between(false_positive_rate, true_positive_rate, facecolor='steelblue', alpha=0.6)
+plt.text(0.95, 0.05, 'AUC = %0.4f' % roc_auc_score(y_test, y_pred_tree), ha='right', fontsize=12, weight='bold', color='blue')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
+
+# AUC = 0.7926
+# Both models are either over or very close to the 0.80 AUC mark. 
+# %%

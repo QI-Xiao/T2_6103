@@ -76,7 +76,7 @@ plt.show()
 # From initial analysis, the dataset seems to be highly unbalanced. 
 # There are 4699 cases without a stroke and 209 cases with a stroke among the participant list. 
 #%%
-# Further subdiving the dataset into male and female sets. 
+# Further subdividing the dataset into male and female sets. 
 
 grouped = df.groupby(df['gender'])
 male_stroke = grouped.get_group('1')
@@ -87,18 +87,20 @@ print(male_stroke['stroke'].value_counts())
 # 1     89
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 108 men with stroke and 2007 without stroke. 
-
+# See plot below
 male_stroke['stroke'].value_counts().plot.bar()
 plt.title('Male Stroke Frequency')
 plt.xlabel('Class')
 plt.ylabel('Frequency')
 plt.show()
 
+#%%
 print(female_stroke['stroke'].value_counts())
 # 0    2777
 # 1     120
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 141 women with stroke and 2853 without stroke. 
+# See plot below
 female_stroke['stroke'].value_counts().plot.bar()
 plt.title('Female Stroke Frequency')
 plt.xlabel('Class')
@@ -170,19 +172,19 @@ welch_ttest(stroke_yes['age'], stroke_no['age'])
 # EDA - Logit plots for BMI and glucose level variables 
 import seaborn as sns
 
-g = sns.lmplot(x="avg_glucose_level", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
-# Binomial regression/logistic
-g.set(xlim=(40, 270), ylim=(-.05, 1.05))
+# g = sns.lmplot(x="avg_glucose_level", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
+# # Binomial regression/logistic
+# g.set(xlim=(40, 270), ylim=(-.05, 1.05))
 
-plt.show()
+# plt.show()
 
-print("\nReady to continue.")
+# print("\nReady to continue.")
 
-g = sns.lmplot(x="bmi", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
-# Binomial regression/logistic
-g.set(xlim=(0, 80), ylim=(-.05, 1.05))
+# g = sns.lmplot(x="bmi", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
+# # Binomial regression/logistic
+# g.set(xlim=(0, 80), ylim=(-.05, 1.05))
 
-plt.show()
+# plt.show()
 #%%
 # EDA - Pairs plot
 sns.set(style="ticks")

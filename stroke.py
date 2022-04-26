@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
+sn.set(style="ticks")
 
 # %%
 # Loading the data set
@@ -144,6 +145,165 @@ print(y_sm.value_counts())
 # We now have generated equal number of participants who have a stroke and participants who do not have a stroke.
 
 # The data set is perfectly balanced now!
+
+#%%
+# Logistic regression using balanced dataset
+
+df_unbalanced_train, df_unbalanced_test, y_unbalanced_train, y_unbalanced_test = train_test_split(df, y, test_size= 0.2, random_state= 15, stratify=y)
+
+import statsmodels.api as sm
+from statsmodels.formula.api import glm
+
+model1_unbalanced = glm(formula='stroke ~ C(gender) + age + C(hypertension) + C(heart_disease) + C(ever_married) + C(work_type) + C(Residence_type) + avg_glucose_level + bmi + C(smoking_status)', data=df_unbalanced_train, family=sm.families.Binomial())
+
+model1_unbalanced_fit = model1_unbalanced.fit()
+print( model1_unbalanced_fit.summary() )
+
+# %%
+model2_unbalanced = glm(formula='stroke ~ age + C(hypertension) + C(heart_disease) + avg_glucose_level', data=df_unbalanced_train, family=sm.families.Binomial())
+
+model2_unbalanced_fit = model2_unbalanced.fit()
+print( model2_unbalanced_fit.summary() )
+
+# The p-value are all lower than 0.05, meaning that the variables are significant.
+
+# %%
+# And let us check the VIF value (watch out for multicollinearity issues)
+# Import functions
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Get variables for which to compute VIF and add intercept term
+X_unbalanced_train = df_unbalanced_train[['hypertension', 'heart_disease', 'avg_glucose_level', 'age']]
+X_unbalanced_train['Intercept'] = 1
+
+# Compute and view VIF
+vif = pd.DataFrame()
+vif["variables"] = X_unbalanced_train.columns
+vif["VIF"] = [ variance_inflation_factor(X_unbalanced_train.values, i) for i in range(X_unbalanced_train.shape[1]) ] # list comprehension
+
+# View results using print
+print(vif)
+# It seems that the vif is lower than 10, which means the model have no problem of Multicollinearity
+
+#%%
+# So we can predict the stroke possibility now.
+
+df_train_with_predict = df_unbalanced_train.copy()
+df_train_with_predict['predict'] = model2_unbalanced_fit.predict(X_unbalanced_train)
+
+#%%
+stroke_lst = [0, 1]
+
+# Iterate through the five airlines
+for status in stroke_lst:
+    # Subset to the airline
+    subset = df_train_with_predict[df_train_with_predict['stroke'] == status]
+    
+    # Draw the density plot
+    sn.distplot(subset['predict'], hist = False, kde = True,
+                 kde_kws = {'linewidth': 2},
+                 label = status)
+    
+# Plot formatting
+plt.legend(prop={'size': 16}, title = 'Stroke')
+plt.title('Density Plot with Different Stroke Status')
+plt.xlabel('Prediction')
+plt.ylabel('Density')
+
+# %%
+
+# probs_y is a 2-D array of probability of being labeled as 0 (first column of array) vs 1 (2nd column in array)
+
+from sklearn import metrics
+from sklearn.metrics import precision_recall_curve
+precision, recall, thresholds = precision_recall_curve(df_train_with_predict['stroke'], df_train_with_predict['predict']) 
+   #retrieve probability of being 1(in second column of probs_y)
+pr_auc = metrics.auc(recall, precision)
+
+plt.title("Precision-Recall vs Threshold Chart")
+plt.plot(thresholds, precision[: -1], "b--", label="Precision")
+plt.plot(thresholds, recall[: -1], "r--", label="Recall")
+plt.ylabel("Precision, Recall")
+plt.xlabel("Threshold")
+plt.legend(loc="lower left")
+plt.ylim([0,1])
+
+#%%
+from sklearn.metrics import ConfusionMatrixDisplay
+
+cutoff = 0.5
+ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+# We can find that cutoff 0.5 is not suitable for this model.
+
+#%%
+# Choosing the Suitable Cutoff Value
+cost_fp = 1
+cost_fn = 6
+# Among the 97,374 hospitalizations (average cost: $20,396 ± $23,256), the number with ischemic, hemorrhagic, or other strokes was 62,637, 16,331, and 48,208, respectively, with these types having average costs, in turn, of $18,963 ± $21,454, $32,035 ± $32,046, and $19,248 ± $21,703. 
+# https://pubmed.ncbi.nlm.nih.gov/23954598/#:~:text=Results%3A%20Among%20the%2097%2C374%20hospitalizations,%2432%2C046%2C%20and%20%2419%2C248%20%C2%B1%20%2421%2C703.
+
+cost_lst = []
+cutoff_lst = []
+for cutoff in np.linspace(0,0.5,26):
+    matrix = confusion_matrix(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+    fp = matrix[0][1]
+    fn = matrix[1][0]
+    cost_lst.append(fp * cost_fp + fn * cost_fn)
+    cutoff_lst.append(cutoff)
+
+plt.title("Cost vs Threshold Chart")
+plt.plot(cutoff_lst, cost_lst, "b--")
+plt.ylabel("Cost")
+plt.xlabel("Threshold")
+plt.show()
+
+plt.title("Cost vs Threshold Chart")
+plt.plot(cutoff_lst, cost_lst, "b--")
+plt.ylabel("Cost")
+plt.xlabel("Threshold")
+# plt.ylim([750,1200])
+plt.ylim([800,1500])
+plt.show()
+
+#%%
+ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+
+
+#%%
+
+X_scale = pd.DataFrame( scale(X_sm), columns=X_sm.columns )
+y_scale = y_sm.copy()
+
+X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
+
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import scale
+
+mrroger = 7
+knn = KNeighborsClassifier(n_neighbors=mrroger)
+knn.fit(X_scale_train, y_scale_train)
+
+y_scale_test_pred = knn.predict(X_scale_test)
+
+from sklearn.metrics import classification_report
+
+print(classification_report(y_scale_test, y_scale_test_pred))
+
+print(confusion_matrix(y_scale_test, y_scale_test_pred))
+
+
+
+# %%
+#feature selection
+# from sklearn.feature_selection import RFE
+
+# selector = RFE(knn_cv, n_features_to_select=5, step=1)
+# selector = selector.fit(X_scale, y_scale)
+# print(selector.support_)
+# print(selector.ranking_)
+
 
 # %%
 

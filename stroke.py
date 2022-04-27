@@ -265,7 +265,23 @@ plt.ylim([800,1500])
 plt.show()
 
 #%%
-#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+def cal_precision_recall(confusion_matric):
+    TN, FP = confusion_matric[0]
+    FN, TP = confusion_matric[1]
+    Precision = TP / (TP + FP)
+    Recall = TP / (TP + FN)
+    return Precision, Recall
+
+matrix_unbalanced_logistic = confusion_matrix(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+
+precision_un_logis, recall_un_logis = cal_precision_recall(matrix_unbalanced_logistic)
+
+# disp = ConfusionMatrixDisplay(
+#     confusion_matrix=matrix_unbalanced_logistic,
+#     # display_labels=knn.classes_
+# )
+# disp.plot()
+# plt.show()
 
 
 #%%
@@ -304,8 +320,26 @@ plt.ylabel("Accuracy")
 plt.xlabel("Number of Neighbors")
 plt.legend(loc="lower left")
 
-#%%
 # So choosing k as 8
+#%%
+# whether scale or no scale
+# no scale
+X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
+
+knn2 = KNeighborsClassifier(n_neighbors=mrroger)
+knn2.fit(X_no_scale_train, y_no_scale_train)
+
+y_no_scale_train_pred = knn.predict(X_no_scale_train)
+
+print(classification_report(y_no_scale_train, y_no_scale_train_pred))
+
+knn1_confusion_matric = confusion_matrix(y_no_scale_train, y_no_scale_train_pred)
+print(knn1_confusion_matric)
+
+Precision_no_scale, Recall_no_scale = cal_precision_recall(knn1_confusion_matric)
+
+#%%
+# scaled
 mrroger = 8
 knn = KNeighborsClassifier(n_neighbors=mrroger)
 knn.fit(X_scale_train, y_scale_train)
@@ -314,9 +348,23 @@ y_scale_train_pred = knn.predict(X_scale_train)
 
 print(classification_report(y_scale_train, y_scale_train_pred))
 
-knn_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
-print(knn_confusion_matric)
+knn2_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
+print(knn2_confusion_matric)
 
+Precision_scale, Recall_scale = cal_precision_recall(knn2_confusion_matric)
+
+
+#%%
+
+df_knn = pd.DataFrame(data={'index': ['Precision', 'Recall'], 'No scale': [Precision_no_scale, Precision_scale], 'Scale': [Recall_no_scale, Recall_scale]})
+
+df_knn.set_index('index', inplace=True)
+
+df_knn[['No scale','Scale']].plot(kind='bar', rot=0, title='Precision and Recall Value for No Scale and Scale KNN').legend(loc='lower right')
+plt.xlabel("")
+plt.show()
+
+#%%
 # disp = ConfusionMatrixDisplay(
 #     confusion_matrix=knn_confusion_matric,
 #     display_labels=knn.classes_

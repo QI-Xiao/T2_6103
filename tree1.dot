@@ -1,0 +1,32 @@
+digraph Tree {
+node [shape=box] ;
+0 [label="age <= 49.01\ngini = 0.5\nsamples = 7518\nvalue = [3759, 3759]"] ;
+1 [label="age <= 38.068\ngini = 0.17\nsamples = 2479\nvalue = [2246, 233]"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label="avg_glucose_level <= 82.29\ngini = 0.039\nsamples = 1677\nvalue = [1644, 33]"] ;
+1 -> 2 ;
+3 [label="gini = 0.094\nsamples = 671\nvalue = [638, 33]"] ;
+2 -> 3 ;
+4 [label="gini = 0.0\nsamples = 1006\nvalue = [1006, 0]"] ;
+2 -> 4 ;
+5 [label="avg_glucose_level <= 84.777\ngini = 0.374\nsamples = 802\nvalue = [602, 200]"] ;
+1 -> 5 ;
+6 [label="gini = 0.469\nsamples = 376\nvalue = [235, 141]"] ;
+5 -> 6 ;
+7 [label="gini = 0.239\nsamples = 426\nvalue = [367, 59]"] ;
+5 -> 7 ;
+8 [label="age <= 67.001\ngini = 0.42\nsamples = 5039\nvalue = [1513, 3526]"] ;
+0 -> 8 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+9 [label="work_type <= 2.5\ngini = 0.494\nsamples = 2203\nvalue = [981, 1222]"] ;
+8 -> 9 ;
+10 [label="gini = 0.481\nsamples = 1958\nvalue = [788, 1170]"] ;
+9 -> 10 ;
+11 [label="gini = 0.334\nsamples = 245\nvalue = [193, 52]"] ;
+9 -> 11 ;
+12 [label="work_type <= 2.5\ngini = 0.305\nsamples = 2836\nvalue = [532, 2304]"] ;
+8 -> 12 ;
+13 [label="gini = 0.283\nsamples = 2744\nvalue = [469, 2275]"] ;
+12 -> 13 ;
+14 [label="gini = 0.432\nsamples = 92\nvalue = [63, 29]"] ;
+12 -> 14 ;
+}

@@ -429,43 +429,46 @@ plt.ylabel("Accuracy")
 plt.xlabel("Number of Neighbors")
 plt.legend(loc="lower left")
 
-# So choosing K as 7
+
+# So choosing k as 7
 #%%
-
-# no scale model:
-X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
 mrroger = 7
-knn2 = KNeighborsClassifier(n_neighbors=mrroger)
-knn2.fit(X_no_scale_train, y_no_scale_train)
+# whether scale or no scale
+# no scale
+X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
 
-y_no_scale_train_pred = knn.predict(X_no_scale_train)
+knn_no_scale = KNeighborsClassifier(n_neighbors=mrroger)
+knn_no_scale.fit(X_no_scale_train, y_no_scale_train)
+
+y_no_scale_train_pred = knn_no_scale.predict(X_no_scale_train)
 
 print(classification_report(y_no_scale_train, y_no_scale_train_pred))
 
-knn1_confusion_matric = confusion_matrix(y_no_scale_train, y_no_scale_train_pred)
-print(knn1_confusion_matric)
+knn_no_scale_confusion_matric = confusion_matrix(y_no_scale_train, y_no_scale_train_pred)
+print(knn_no_scale_confusion_matric)
 
-Precision_no_scale, Recall_no_scale = cal_precision_recall(knn1_confusion_matric)
+Precision_no_scale, Recall_no_scale = cal_precision_recall(knn_no_scale_confusion_matric)
 
 #%%
 # scaled
-mrroger = 7
-knn = KNeighborsClassifier(n_neighbors=mrroger)
-knn.fit(X_scale_train, y_scale_train)
 
-y_scale_train_pred = knn.predict(X_scale_train)
+knn_scale = KNeighborsClassifier(n_neighbors=mrroger)
+knn_scale.fit(X_scale_train, y_scale_train)
+
+
+y_scale_train_pred = knn_scale.predict(X_scale_train)
 
 print(classification_report(y_scale_train, y_scale_train_pred))
 
-knn2_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
-print(knn2_confusion_matric)
+knn_scale_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
+print(knn_scale_confusion_matric)
 
-Precision_scale, Recall_scale = cal_precision_recall(knn2_confusion_matric)
+Precision_scale, Recall_scale = cal_precision_recall(knn_scale_confusion_matric)
 
 
 #%%
 
-df_knn = pd.DataFrame(data={'index': ['Precision', 'Recall'], 'No scale': [Precision_no_scale, Precision_scale], 'Scale': [Recall_no_scale, Recall_scale]})
+df_knn = pd.DataFrame(data={'index': ['Precision', 'Recall'], 'No scale': [Precision_no_scale,  Recall_no_scale ], 'Scale': [Precision_scale, Recall_scale]})
 
 df_knn.set_index('index', inplace=True)
 
@@ -474,12 +477,12 @@ plt.xlabel("")
 plt.show()
 
 #%%
-# disp = ConfusionMatrixDisplay(
-#     confusion_matrix=knn_confusion_matric,
-#     display_labels=knn.classes_
-# )
-# disp.plot()
-# plt.show()
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=knn_scale_confusion_matric,
+    display_labels=knn.classes_
+)
+disp.plot()
+plt.show()
 
 # %%
 # Logistic regression using sklearn:

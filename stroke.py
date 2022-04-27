@@ -254,6 +254,7 @@ print(y_sm.value_counts())
 # The data set is perfectly balanced now!
 
 #%%
+from sklearn.model_selection import train_test_split
 # Logistic regression using balanced dataset
 
 df_unbalanced_train, df_unbalanced_test, y_unbalanced_train, y_unbalanced_test = train_test_split(df, y, test_size= 0.2, random_state= 15, stratify=y)
@@ -322,6 +323,7 @@ plt.ylabel('Density')
 
 from sklearn.metrics import auc
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import confusion_matrix, classification_report
 precision, recall, thresholds = precision_recall_curve(df_train_with_predict['stroke'], df_train_with_predict['predict']) 
    #retrieve probability of being 1(in second column of probs_y)
 pr_auc = auc(recall, precision)
@@ -392,17 +394,17 @@ precision_un_logis, recall_un_logis = cal_precision_recall(matrix_unbalanced_log
 
 
 #%%
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import scale
+from sklearn.metrics import classification_report
 
 X_scale = pd.DataFrame( scale(X_sm), columns=X_sm.columns )
 y_scale = y_sm.copy()
 
 X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
 
-# KNN algorithm
-from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import scale
-from sklearn.metrics import classification_report
 
 mrroger_lst = []
 train_score_lst = []
@@ -427,12 +429,12 @@ plt.ylabel("Accuracy")
 plt.xlabel("Number of Neighbors")
 plt.legend(loc="lower left")
 
-# So choosing k as 8
+# So choosing K as 7
 #%%
-# whether scale or no scale
-# no scale
-X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
 
+# no scale model:
+X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_test_split(X_sm, y_sm, test_size= 0.2, random_state= 15, stratify=y_sm)
+mrroger = 7
 knn2 = KNeighborsClassifier(n_neighbors=mrroger)
 knn2.fit(X_no_scale_train, y_no_scale_train)
 
@@ -447,7 +449,7 @@ Precision_no_scale, Recall_no_scale = cal_precision_recall(knn1_confusion_matric
 
 #%%
 # scaled
-mrroger = 8
+mrroger = 7
 knn = KNeighborsClassifier(n_neighbors=mrroger)
 knn.fit(X_scale_train, y_scale_train)
 
@@ -480,15 +482,6 @@ plt.show()
 # plt.show()
 
 # %%
-#feature selection
-# from sklearn.feature_selection import RFE
-
-# selector = RFE(knn_cv, n_features_to_select=5, step=1)
-# selector = selector.fit(X_scale, y_scale)
-# print(selector.support_)
-# print(selector.ranking_)
-
-# %%
 # Logistic regression using sklearn:
 #
 # Creating test/train data sets from the balanced set using sklearn train_test_split: 80% train, 20% test
@@ -507,7 +500,7 @@ strokemodel.fit(X_train, y_train)
 
 #%%
 strokemodel.score(X_test, y_test)
-# 0.8191489361702128 The model is nearly 82% effective in identifying or predicting the results of a participant getting a stroke or not. 
+# 0.81915 The model is nearly 82% effective in identifying or predicting the results of a participant getting a stroke or not. 
 # %%
 # creating predicted target values using the model for X_test:
 y_predict = strokemodel.predict(X_test)

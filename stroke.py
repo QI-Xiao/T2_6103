@@ -269,28 +269,69 @@ plt.show()
 
 
 #%%
-# KNN algorithm
-from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import scale
+
 X_scale = pd.DataFrame( scale(X_sm), columns=X_sm.columns )
 y_scale = y_sm.copy()
 
 X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
 
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import scale
+from sklearn.metrics import classification_report
 
-mrroger = 7
+mrroger_lst = []
+train_score_lst = []
+test_score_lst = []
+
+for mrroger in range(1,26):
+    knn = KNeighborsClassifier(n_neighbors=mrroger)
+    knn.fit(X_scale_train, y_scale_train)
+
+    # y_scale_test_pred = knn.predict(X_scale_test)
+
+    mrroger_lst.append(mrroger)
+    train_score_lst.append( knn.score(X_scale_train,y_scale_train) )
+    test_score_lst.append( knn.score(X_scale_test,y_scale_test) )
+
+#%%
+
+plt.title("KNN: Varying Number of Neighbors")
+plt.plot(mrroger_lst, train_score_lst, "b--", label="Train")
+plt.plot(mrroger_lst, test_score_lst, "r--", label="Test")
+plt.ylabel("Accuracy")
+plt.xlabel("Number of Neighbors")
+plt.legend(loc="lower left")
+
+#%%
+# So choosing k as 8
+mrroger = 8
 knn = KNeighborsClassifier(n_neighbors=mrroger)
 knn.fit(X_scale_train, y_scale_train)
 
-y_scale_test_pred = knn.predict(X_scale_test)
+y_scale_train_pred = knn.predict(X_scale_train)
 
-from sklearn.metrics import classification_report
+print(classification_report(y_scale_train, y_scale_train_pred))
 
-print(classification_report(y_scale_test, y_scale_test_pred))
+knn_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
+print(knn_confusion_matric)
 
-print(confusion_matrix(y_scale_test, y_scale_test_pred))
+# disp = ConfusionMatrixDisplay(
+#     confusion_matrix=knn_confusion_matric,
+#     display_labels=knn.classes_
+# )
+# disp.plot()
+# plt.show()
 
+# %%
+#feature selection
+# from sklearn.feature_selection import RFE
+
+# selector = RFE(knn_cv, n_features_to_select=5, step=1)
+# selector = selector.fit(X_scale, y_scale)
+# print(selector.support_)
+# print(selector.ranking_)
 
 # %%
 # Logistic regression using sklearn:

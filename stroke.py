@@ -405,7 +405,7 @@ y_scale = y_sm.copy()
 
 X_scale_train, X_scale_test, y_scale_train, y_scale_test = train_test_split(X_scale, y_scale, test_size= 0.2, random_state= 15, stratify=y_scale)
 
-
+#%%
 mrroger_lst = []
 train_score_lst = []
 test_score_lst = []
@@ -477,12 +477,12 @@ plt.xlabel("")
 plt.show()
 
 #%%
-disp = ConfusionMatrixDisplay(
-    confusion_matrix=knn_scale_confusion_matric,
-    display_labels=knn.classes_
-)
-disp.plot()
-plt.show()
+# disp = ConfusionMatrixDisplay(
+#     confusion_matrix=knn_scale_confusion_matric,
+#     display_labels=knn.classes_
+# )
+# disp.plot()
+# plt.show()
 
 # %%
 # Logistic regression using sklearn:

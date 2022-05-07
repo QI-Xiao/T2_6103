@@ -315,7 +315,7 @@ for status in stroke_lst:
     
     # Draw the density plot
     sn.distplot(subset['predict'], hist = False, kde = True,
-                 kde_kws = {'linewidth': 5},
+                 kde_kws = {'linewidth': 3},
                  label = status)
     
 # Plot formatting
@@ -344,10 +344,10 @@ plt.legend(loc="lower left")
 plt.ylim([0,1])
 
 #%%
-#from sklearn.metrics import ConfusionMatrixDisplay
+# from sklearn.metrics import ConfusionMatrixDisplay
 
-#cutoff = 0.5
-#ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
+# cutoff = 0.5
+# ConfusionMatrixDisplay.from_predictions(df_train_with_predict['stroke'], df_train_with_predict['predict']>cutoff)
 # We can find that cutoff 0.5 is not suitable for this model.
 
 #%%
@@ -388,13 +388,31 @@ def cal_precision_recall(confusion_matric):
     Recall = TP / (TP + FN)
     return Precision, Recall
 
-matrix_unbalanced_logistic = confusion_matrix(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
+matrix_unbalanced_train = confusion_matrix(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1)
 
-precision_un_logis, recall_un_logis = cal_precision_recall(matrix_unbalanced_logistic)
+precision_un_logis, recall_un_logis = cal_precision_recall(matrix_unbalanced_train)
 
+print(classification_report(df_train_with_predict['stroke'], df_train_with_predict['predict']>0.1))
+
+#%% 
+# The data before are train data. We use test data here this time to evaluate model again.
+X_unbalanced_test = df_unbalanced_test[['hypertension', 'heart_disease', 'avg_glucose_level', 'age']]
+X_unbalanced_test['Intercept'] = 1
+
+df_test_with_predict = df_unbalanced_test.copy()
+df_test_with_predict['predict'] = model2_unbalanced_fit.predict(X_unbalanced_test)
+
+matrix_unbalanced_test = confusion_matrix(df_test_with_predict['stroke'], df_test_with_predict['predict']>0.1)
+print(matrix_unbalanced_test)
+print(classification_report(df_test_with_predict['stroke'], df_test_with_predict['predict']>0.1))
+
+#%%
+from sklearn.metrics import roc_auc_score, roc_curve
+roc_auc_score(df_test_with_predict['stroke'], df_test_with_predict['predict']>0.1)
+
+# from sklearn.metrics import ConfusionMatrixDisplay
 # disp = ConfusionMatrixDisplay(
-#     confusion_matrix=matrix_unbalanced_logistic,
-#     # display_labels=knn.classes_
+#     confusion_matrix=matrix_unbalanced_train,
 # )
 # disp.plot()
 # plt.show()
@@ -447,11 +465,20 @@ X_no_scale_train, X_no_scale_test, y_no_scale_train, y_no_scale_test = train_tes
 knn_no_scale = KNeighborsClassifier(n_neighbors=mrroger)
 knn_no_scale.fit(X_no_scale_train, y_no_scale_train)
 
-y_no_scale_train_pred = knn_no_scale.predict(X_no_scale_train)
+# y_no_scale_train_pred = knn_no_scale.predict(X_no_scale_train)
 
-print(classification_report(y_no_scale_train, y_no_scale_train_pred))
+# print(classification_report(y_no_scale_train, y_no_scale_train_pred))
 
-knn_no_scale_confusion_matric = confusion_matrix(y_no_scale_train, y_no_scale_train_pred)
+# knn_no_scale_confusion_matric = confusion_matrix(y_no_scale_train, y_no_scale_train_pred)
+# print(knn_no_scale_confusion_matric)
+
+# Precision_no_scale, Recall_no_scale = cal_precision_recall(knn_no_scale_confusion_matric)
+
+y_no_scale_test_pred = knn_no_scale.predict(X_no_scale_test)
+
+print(classification_report(y_no_scale_test, y_no_scale_test_pred))
+
+knn_no_scale_confusion_matric = confusion_matrix(y_no_scale_test, y_no_scale_test_pred)
 print(knn_no_scale_confusion_matric)
 
 Precision_no_scale, Recall_no_scale = cal_precision_recall(knn_no_scale_confusion_matric)
@@ -463,16 +490,25 @@ knn_scale = KNeighborsClassifier(n_neighbors=mrroger)
 knn_scale.fit(X_scale_train, y_scale_train)
 
 
-y_scale_train_pred = knn_scale.predict(X_scale_train)
+# y_scale_train_pred = knn_scale.predict(X_scale_train)
 
-print(classification_report(y_scale_train, y_scale_train_pred))
+# print(classification_report(y_scale_train, y_scale_train_pred))
 
-knn_scale_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
+# knn_scale_confusion_matric = confusion_matrix(y_scale_train, y_scale_train_pred)
+# print(knn_scale_confusion_matric)
+
+# Precision_scale, Recall_scale = cal_precision_recall(knn_scale_confusion_matric)
+
+y_scale_test_pred = knn_scale.predict(X_scale_test)
+
+print(classification_report(y_scale_test, y_scale_test_pred))
+
+knn_scale_confusion_matric = confusion_matrix(y_scale_test, y_scale_test_pred)
 print(knn_scale_confusion_matric)
 
+print(roc_auc_score(y_scale_test, y_scale_test_pred))
+
 Precision_scale, Recall_scale = cal_precision_recall(knn_scale_confusion_matric)
-
-
 #%%
 
 df_knn = pd.DataFrame(data={'index': ['Precision', 'Recall'], 'No scale': [Precision_no_scale,  Recall_no_scale ], 'Scale': [Precision_scale, Recall_scale]})
@@ -484,9 +520,10 @@ plt.xlabel("")
 plt.show()
 
 #%%
+# from sklearn.metrics import ConfusionMatrixDisplay
 # disp = ConfusionMatrixDisplay(
 #     confusion_matrix=knn_scale_confusion_matric,
-#     display_labels=knn.classes_
+#     display_labels=knn_scale.classes_
 # )
 # disp.plot()
 # plt.show()

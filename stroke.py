@@ -64,9 +64,10 @@ df.shape
 value_count_stroke = df['stroke'].value_counts()
 print(value_count_stroke)
 
-df['stroke'].value_counts().plot.bar()
-plt.title('Class Frequency')
+axstroke=df['stroke'].value_counts().plot.bar()
+plt.title('Stroke Frequency')
 plt.xlabel('Class')
+axstroke.set_xticklabels(['No Stroke', 'Stroke'])
 plt.ylabel('Frequency')
 plt.show()
 
@@ -89,9 +90,10 @@ print(male_stroke['stroke'].value_counts())
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 108 men with stroke and 2007 without stroke. 
 # See plot below
-male_stroke['stroke'].value_counts().plot.bar()
+axmale = male_stroke['stroke'].value_counts().plot.bar()
 plt.title('Male Stroke Frequency')
 plt.xlabel('Class')
+axmale.set_xticklabels(['No Stroke', 'Stroke'])
 plt.ylabel('Frequency')
 plt.show()
 
@@ -102,9 +104,10 @@ print(female_stroke['stroke'].value_counts())
 # Name: stroke, dtype: int64
 # Extremely unbalanced set. 141 women with stroke and 2853 without stroke. 
 # See plot below
-female_stroke['stroke'].value_counts().plot.bar()
+axfemale=female_stroke['stroke'].value_counts().plot.bar()
 plt.title('Female Stroke Frequency')
 plt.xlabel('Class')
+axfemale.set_xticklabels(['No Stroke', 'Stroke'])
 plt.ylabel('Frequency')
 plt.show()
 
@@ -197,27 +200,29 @@ print("\nReady to continue.")
 #%%
 # EDA - Box plots to show relationships between stroke and work-type & stroke and marriage status 
 work_ranking = ["0", "1", "2", "3", "4"]
-
-sns.boxplot(x="work_type", y="bmi", color="b", order=work_ranking, data=df)
+ax = sns.boxplot(x="work_type", y="bmi", color="b", order=work_ranking, data=df)
 plt.title('BMI Distribution based on Work Type')
+ax.set_xticklabels(['Private', 'Self-emp.', 'Children', 'Gov Job', 'Never Worked'])
 plt.show()
-
 print("\nReady to continue.")
 
-sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
+ax1 = sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
 plt.title('BMI Distribution based on Marital Status')
+ax1.set_xticklabels(['Yes', 'No'])
 plt.show()
 
 print("\nReady to continue.")
 
-sns.boxplot(x="Residence_type", y="avg_glucose_level", color="b", data=df)
+ax2 = sns.boxplot(x="Residence_type", y="avg_glucose_level", color="b", data=df)
 plt.title('Glucose Level Distribution based on Residence Type')
+ax2.set_xticklabels(['Urban', 'Rural'])
 plt.show()
 
 print("\nReady to continue.")
 
-sns.boxplot(x="Residence_type", y="bmi", color="b", data=df)
-plt.title('Glucose Level Distribution based on Residence Type')
+ax3 = sns.boxplot(x="Residence_type", y="bmi", color="b", data=df)
+plt.title('BMI Distribution based on Residence Type')
+ax3.set_xticklabels(['Urban', 'Rural'])
 plt.show()
 
 print("\nReady to continue.")
@@ -226,12 +231,14 @@ print("\nReady to continue.")
 #%%
 # EDA - Stacked bar charts to visualize stroke  hypertension and heart disease 
 pivot_heart = pd.pivot_table(data=stroke_yes, values='stroke', index='heart_disease', columns='gender', aggfunc='count')
-ax = pivot_heart.plot.bar(stacked=True)
-ax.set_title('Count of Stroke Victims with Heart Disease')
+ax5 = pivot_heart.plot.bar(stacked=True)
+ax5.set_title('Count of Stroke Victims with Heart Disease')
+ax5.set_xticklabels(['No', 'Yes'])
 print(pivot_heart)
 pivot_hyper = pd.pivot_table(data=stroke_yes, values='stroke', index='hypertension', columns='gender', aggfunc='count')
-ax = pivot_hyper.plot.bar(stacked=True)
-ax.set_title('Count of Stroke Victims with Hypertension')
+ax6 = pivot_hyper.plot.bar(stacked=True)
+ax6.set_title('Count of Stroke Victims with Hypertension')
+ax6.set_xticklabels(['No', 'Yes'])
 print(pivot_hyper)
 #%%
 # install imbalanced-learn package that has SMOTE. 
